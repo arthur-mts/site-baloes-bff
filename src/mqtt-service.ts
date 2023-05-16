@@ -1,10 +1,14 @@
 import mqtt from 'mqtt';
-import BalloonRepository from './balloon-repository';
+import BalloonRepository, {Balloon} from './balloon-repository';
 import {allEffects} from "./utils/effects";
 
 export default class MqttService {
 
     private client: mqtt.Client
+
+    private readonly balloon_management_topic: string;
+    private readonly balloon_get_topic: string;
+    private readonly balloon_resp_topic: string;
 
     constructor(private balloonRepo: BalloonRepository) {
         this.client = mqtt.connect(
@@ -20,17 +24,46 @@ export default class MqttService {
             console.error(err);
             throw new Error("Failed to connect to mqtt server")
         })
+
+        if (!process.env.BALLOON_MNG_TOPIC) {
+            throw new Error("No topic given for balloon management")
+        }
+        this.balloon_management_topic = process.env.BALLOON_MNG_TOPIC!!;
+
+        if (!process.env.BALLOON_GET_TOPIC) {
+            throw new Error("No topic given for balloon fetch")
+        }
+        this.balloon_get_topic = process.env.BALLOON_GET_TOPIC!!;
+
+        if (!process.env.BALLOON_RESP_TOPIC) {
+            throw new Error("No topic given for balloon fetch")
+        }
+        this.balloon_resp_topic = process.env.BALLOON_RESP_TOPIC!!;
     }
 
-    updateEffect(effect: string) {
+    updateAllEffects(effect: string) {
+        this.client.publish(this.balloon_management_topic, JSON.stringify({
+            effect,
+        }), (err, p) => {
+            if (err) {
+                console.error("Failed to publish on balloon management topic", err)
+            }
+        });
+    }
 
-        const balloon_management_topic = process.env.BALLOON_MNG_TOPIC;
+    askForBalloons() {
+        this.client.publish(this.balloon_get_topic, "1", (err, p) => {
+            if (err) {
+                console.error("Failed to publish on balloon get topic", err)
+            }
+        })
+    }
 
-        if (!balloon_management_topic) {
-            throw new Error("No topic given for balloon management");
-        }
-
-        this.client.publish(balloon_management_topic, effect, (err, p) => {
+    updateEffect(balloonId: string, effect: string) {
+        this.client.publish(this.balloon_management_topic, JSON.stringify({
+            id: balloonId,
+            effect,
+        }), (err, p) => {
             if (err) {
                 console.error("Failed to publish on balloon management topic", err)
             }
@@ -38,29 +71,11 @@ export default class MqttService {
     }
 
     private setupListeners() {
-        const balloon_quantity_topic = process.env.BALLOON_QUANTITY_TOPIC;
-        const balloon_effect_response_topic = process.env.BALLOON_MNG_RESP_TOPIC;
-
-        if (!balloon_effect_response_topic) {
-            throw new Error("No topic given for baloon management");
-        }
-        if (!balloon_quantity_topic) {
-            throw new Error("No topic given for balloon management");
-        }
-
-
-        this.client.subscribe(balloon_quantity_topic);
-        this.client.subscribe(balloon_effect_response_topic);
-
+        this.client.subscribe(this.balloon_resp_topic);
 
         this.client.on("message", (topic, message) => {
-            if (topic == balloon_quantity_topic) {
-                const balloonQuantity = Number(message.toString())
-                this.balloonRepo.updateBalloonQuantity(balloonQuantity)
-            } else if (topic == balloon_effect_response_topic) {
-                const balloonActualState = message.toString()
-                this.balloonRepo.updateBalloonEffect(balloonActualState)
-            }
+            const balloons: Balloon[] = JSON.parse(message.toString())
+            this.balloonRepo.updateBalloons(balloons)
         })
     }
 

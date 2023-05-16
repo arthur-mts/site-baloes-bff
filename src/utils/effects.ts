@@ -1,4 +1,4 @@
-export const staticEffects = {
+export const staticEffects: Record<string, string> = {
     "11": "desligado",
     "1": "vermelho",
     "2": "verde",
@@ -12,7 +12,7 @@ export const staticEffects = {
     "10": "laranja",
 };
 
-export const dynamicsEffects = {
+export const dynamicsEffects: Record<string, string> = {
     "12": "flashes",
     "13": "pulso em StandBy",
     "14": "fade em StandBy",
@@ -24,7 +24,7 @@ export const dynamicsEffects = {
 };
 
 
-export const allEffects = {
+export const allEffects: Record<string, string> = {
     ...dynamicsEffects,
     ...staticEffects,
 }

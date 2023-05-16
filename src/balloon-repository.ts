@@ -1,8 +1,14 @@
 import fs from "fs";
 import path from "path";
-interface BaloonDatabase {
-    qnt: number;
+
+export interface Balloon {
+    id: string;
     effect: string;
+    battery: number;
+    status: 'ACTIVE' | 'INACTIVE';
+}
+interface BaloonDatabase {
+    balloons: Balloon[];
 }
 export default class BalloonRepository {
     private readonly db: BaloonDatabase;
@@ -11,24 +17,12 @@ export default class BalloonRepository {
         this.db = JSON.parse(fs.readFileSync(this.dbPath, 'utf-8'))
     }
 
-    updateBalloonQuantity(quant: number) {
-        this.db.qnt = quant;
+    updateBalloons(balloons: Balloon[]) {
+        this.db.balloons = balloons;
         fs.writeFileSync(this.dbPath, JSON.stringify(this.db))
     }
 
-    updateBalloonEffect(effect: string) {
-        this.db.effect = effect;
-        console.log(this.db)
-        fs.writeFileSync(this.dbPath, JSON.stringify(this.db))
+    getBalloons() {
+        return this.db.balloons;
     }
-
-    getBalloonQuantity() {
-        return this.db.qnt;
-    }
-
-    getBalloonEffect() {
-        return this.db.effect;
-    }
-
-
 }
