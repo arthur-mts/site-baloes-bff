@@ -4,12 +4,13 @@ import MqttService from './mqtt-service';
 import bodyParser from "body-parser";
 import BalloonRepository from './balloon-repository';
 import {allEffects} from "./utils/effects";
-
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.text());
+app.use(cors());
 const port = process.env.PORT;
 
 const baloesRepository = new BalloonRepository();

@@ -18,6 +18,7 @@ export default class BalloonRepository {
 
     updateBalloonEffect(effect: string) {
         this.db.effect = effect;
+        console.log(this.db)
         fs.writeFileSync(this.dbPath, JSON.stringify(this.db))
     }
 
