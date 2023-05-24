@@ -1,47 +1,56 @@
-## Site Balões BFF
+# Site Balões Backend
 APP que comunica o [site-baloes](https://github.com/danivict/site-baloes) com o broker MQTT.
 
-## Endpoints que esse serviço expões
+## Endpoints HTTP
 
 ###  GET /balloons   
-Retorna uma lista que descreve os balões disponíveis  
+Retorna uma lista que descreve os balões disponíveis.  
+O campo ID é o MAC address daquele ESP-32.  
 Exemplo:
  ```json
 [
     {
-        "id": "1",
+        "id": "00-B0-D0-63-C2-26",
         "effect": "1",
         "battery": 50, //0-100%
-        "status": "ACTIVE"
+        "status": "ACTIVE",
+        "signal": -55 //-99 - 0
     },
     {
-        "id": "2",
+        "id": "00-B0-D0-63-C2-26",
         "effect": "2",
         "battery": 50, //0-100%
-        "status": "ACTIVE"
+        "status": "ACTIVE",
+        "signal": -55 //-99 - 0
     }
 ]
 ```
   
 
-## PUT /balloons/{id}/effect  
+## PUT /balloons/effect  
 Valida e atualiza o efeito recebido no corpo da requisição para um balão específico.
 ```http request
-PUT http://localhost:8090/balloons/1/effect
-Content-Type: text/plain
+PUT http://localhost:8090/balloons/effect
+Content-Type: application/json
 
-10
+{
+    "id": "00-B0-D0-63-C2-26",
+    "effect": "2"
+}
 ```
+Deve retornar um erro 400 se o ID ou o efeito forem inválidos.
 ## PUT /balloons/effect
 Valida e atualiza o efeito recebido no corpo da requisição para todos os balões.
 ```http request
-PUT http://localhost:8090/balloons/effect
-Content-Type: text/plain
+PUT http://localhost:8090/balloons/effect/all
+Content-Type: application/json
 
-10
+{
+    "effect": "2"
+}
 ```
 
-
+---
 
 ## Tópicos MQTT
 
@@ -56,7 +65,7 @@ mosquitto_sub -h localhost -p 9001 -t /baloes/get
 Nesse tópico escutamos as alterações dos balões disponíveis.  
 Para testar, use esse comando:
 ```sh
-mosquitto_pub -h localhost -p 9001 -m "[{\"id\": \"1\", \"effect\": \"10\",\"status\": \"ACTIVE\", \"battery\": 50  }]" -t /baloes/resp
+mosquitto_pub -h localhost -p 9001 -m "[{\"id\":\"00-B0-D0-63-C2-26\",\"effect\":\"1\",\"battery\":50,\"status\":\"ACTIVE\",\"signal\":-55},{\"id\":\"00-B0-D0-63-C2-26\",\"effect\":\"2\",\"battery\":50,\"status\":\"ACTIVE\",\"signal\":-55}]" -t /baloes/resp
 ```
 
 ### /baloes/efeito
